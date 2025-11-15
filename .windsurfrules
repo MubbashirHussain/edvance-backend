@@ -1,0 +1,217 @@
+# ============================================
+# WINDSURF PROJECT RULES — NESTJS TEMPLATE
+# ============================================
+
+# -------------------------------------------------
+# 1. GLOBAL PROJECT ARCHITECTURE
+# -------------------------------------------------
+The project uses a Modular Monolith architecture designed for 
+future microservices separation. All code MUST follow this structure:
+
+src/
+  modules/<feature>/
+    dto/
+    entities/
+    <feature>.controller.ts
+    <feature>.service.ts
+    <feature>.module.ts
+
+config/
+common/
+  decorators/
+  guards/
+  interceptors/
+  pipes/
+supabase-schema.sql
+README.md
+PROJECT_STRUCTURE.md
+
+Rules:
+- NEVER put business logic outside module services.
+- NEVER share internal logic between modules.
+- NEVER import a module's service into another module.
+- ALWAYS use clients or shared interfaces for future microservices.
+- ALWAYS follow strict separation: controller → service → DB.
+
+# -------------------------------------------------
+# 2. MODULE GENERATION RULES
+# -------------------------------------------------
+When creating a new module, Windsurf MUST generate:
+
+modules/<feature>/
+  entities/<entity>.entity.ts
+  dto/create-<entity>.dto.ts
+  dto/update-<entity>.dto.ts
+  dto/<entity>-response.dto.ts
+  <feature>.controller.ts
+  <feature>.service.ts
+  <feature>.module.ts
+
+Rules:
+- DTOs MUST use class-validator decorators.
+- Entities MUST be TypeScript interfaces (not classes).
+- Services MUST contain all business logic.
+- Controllers MUST only contain HTTP routing logic.
+- Modules MUST export services only when required.
+
+# -------------------------------------------------
+# 3. DATABASE (SUPABASE) RULES
+# -------------------------------------------------
+Every service MUST:
+
+- Validate DB configuration using:
+    isSupabaseConfigured()
+- Use correct DB client:
+    getSupabase()
+    getSupabaseAdmin()
+- Follow RLS (Row Level Security).
+- Ensure table queries are tenant-scoped if multi-tenant.
+- Return clean DTO responses.
+- Never expose internal Supabase error details.
+
+Never:
+- Never expose SERVICE_ROLE_KEY in logs or responses.
+- Never generate raw SQL unless updating supabase-schema.sql.
+
+# -------------------------------------------------
+# 4. SECURITY RULES
+# -------------------------------------------------
+- Controllers MUST validate request bodies using DTOs.
+- Never accept raw request.body without a DTO.
+- Sensitive values MUST NOT appear in error messages.
+- `.env` MUST ALWAYS be gitignored.
+- Always sanitize and whitelist inputs.
+- Enforce RLS for ALL tables in Supabase.
+- Only backend services may use service-role key.
+
+# -------------------------------------------------
+# 5. CLEAN CODE & ARCHITECTURAL RULES
+# -------------------------------------------------
+Controller Rules:
+- NO business logic inside controllers.
+- Only call service methods.
+- Return response DTOs.
+
+Service Rules:
+- Business logic ONLY.
+- DB operations ONLY here.
+- Must return sanitized, safe entities.
+- Must check Supabase config BEFORE any DB call.
+
+DTO Rules:
+- Use class-validator.
+- Create-DTOs require mandatory fields.
+- Update-DTOs must have optional fields.
+- Response DTOs MUST control data shape returned to API.
+
+# -------------------------------------------------
+# 6. MICROSERVICE FUTURE-READY REQUIREMENTS
+# -------------------------------------------------
+Your code MUST be future-separable into microservices.
+
+Therefore Windsurf must:
+- NEVER tightly couple modules.
+- Use client abstraction patterns for cross-module access.
+- Keep all shared DTOs, contracts, interfaces inside:
+    /common or /libs
+
+NOT allowed:
+- Sharing business logic
+- Cross-module imports of internal logic
+- Hardcoded paths that break when splitting into microservices
+
+Allowed:
+- Clients
+- Interfaces
+- Shared DTOs
+- Event emitters / event bus patterns
+
+# -------------------------------------------------
+# 7. TESTING RULES
+# -------------------------------------------------
+When generating tests:
+- Use Jest
+- Controllers → light tests
+- Services → heavy tests
+- Mock Supabase calls
+- E2E tests go under /test
+
+# -------------------------------------------------
+# 8. DOCUMENTATION RULES
+# -------------------------------------------------
+Whenever Windsurf generates or modifies code:
+
+- Update README.md if:
+  - New endpoints added
+  - Installation changes
+  - New environment variables added
+
+- Update PROJECT_STRUCTURE.md if:
+  - A new module is created
+  - Architecture is expanded
+  - Folder structure changes
+
+- Update supabase-schema.sql if:
+  - Tables / indexes / RLS policies added
+
+- New modules MUST HAVE their own README:
+  e.g., users module → USERS_MODULE_README.md
+
+# -------------------------------------------------
+# 9. RESPONSE RULES FOR WINDSURF
+# -------------------------------------------------
+When user says: “Create a module”
+→ Generate full module (dto, entity, service, controller, module).
+→ Register module in app.module.ts.
+→ Update documentation.
+
+When user says: “Add a feature”
+→ Follow architecture.
+→ Add DTOs.
+→ Update service logic ONLY.
+→ Modify DB schema when necessary.
+→ Update documentation.
+
+When user says: “Make this microservice-ready”
+→ Use clients and interfaces.
+→ Remove direct cross-module imports.
+→ Ensure module independence.
+
+# -------------------------------------------------
+# 10. CODE QUALITY RULES
+# -------------------------------------------------
+- Follow NestJS best practices.
+- Follow TypeScript strict mode.
+- Use async/await everywhere.
+- Avoid ANY type.
+- Use interfaces for type definitions.
+- Services must remain stateless.
+- Functions must be pure where possible.
+
+# -------------------------------------------------
+# 11. COMMANDS WINDSURF SHOULD USE
+# -------------------------------------------------
+Use these commands when asked to run, check, or test code:
+
+npm run start:dev
+npm run start
+npm run test
+npm run lint
+npm run format
+npm audit
+
+# -------------------------------------------------
+# 12. FINAL PRINCIPLE
+# -------------------------------------------------
+Windsurf's job is to ALWAYS keep the project:
+
+- Modular
+- Clean
+- Secure
+- Scalable
+- Microservice-ready
+- Fully documented
+
+Violating architecture rules is NOT allowed under any circumstances.
+
+# END OF RULES
