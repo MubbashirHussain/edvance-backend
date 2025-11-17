@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { SuperAdminAuthService } from './auth/superadmin-auth.service';
 import { CommonModule } from '../../common/common.module';
-import { PrismaService } from '../../common/prisma/prisma.service';
+import { SuperAdminAuthModule } from './auth/superadmin-auth.module';
 
 @Module({
-  imports: [CommonModule],
-  providers: [SuperAdminAuthService, PrismaService],
-  exports: [SuperAdminAuthService],
+  imports: [
+    CommonModule,
+    SuperAdminAuthModule,
+  ],
+  exports: [SuperAdminAuthModule],
 })
 export class SuperAdminModule {}

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Request, Get } from '@nestjs/common';
+import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { SuperAdminSigninDto } from './dto/signin.dto';
@@ -6,8 +6,8 @@ import { SuperAdminSignupDto } from './dto/signup.dto';
 import { SuperAdminAuthService } from './superadmin-auth.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 
-@ApiTags('auth')
-@Controller('auth')
+@ApiTags('superadmin/auth')
+@Controller('superadmin/auth')
 export class SuperAdminAuthController {
   constructor(private readonly authService: SuperAdminAuthService) {}
 

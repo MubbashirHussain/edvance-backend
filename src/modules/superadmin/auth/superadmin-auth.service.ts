@@ -46,6 +46,12 @@ export class SuperAdminAuthService {
     // Generate tokens
     const tokens = await this.getTokens(user.id, user.email, user.role);
 
+    // Update last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() , refreshToken: tokens.refreshToken},
+    });
+
     return {
       user,
       ...tokens,
@@ -79,7 +85,7 @@ export class SuperAdminAuthService {
     // Update last login
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() },
+      data: { lastLogin: new Date() , refreshToken: tokens.refreshToken},
     });
 
     return {
