@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas  = ["public"]
+}
+
+enum Role {
+  USER
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  SCHOOL_STAFF
+  SCHOOL_STUDENT
+  SCHOOL_PARENT
+  SCHOOL_GUEST
+  
+  @@schema("public")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  
+  @@schema("public")
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  password        String
+  firstName       String
+  middleName      String?
+  lastName        String
+  role            Role       @default(USER)
+  status          UserStatus @default(PENDING_VERIFICATION)
+  deviceId        String?    @map("device_id")
+  refreshToken    String?    @map("refresh_token")
+  lastLogin       DateTime?  @map("last_login")
+  emailVerified   Boolean    @default(false) @map("email_verified")
+  emailVerifiedAt DateTime?  @map("email_verified_at")
+  phone           String?
+  profileImage    String?    @map("profile_image")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  @@map("users")
+  @@schema("public")
+}

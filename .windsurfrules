@@ -1,217 +1,132 @@
-# ============================================
-# WINDSURF PROJECT RULES — NESTJS TEMPLATE
-# ============================================
+# .windsurfrules for edvances
 
-# -------------------------------------------------
-# 1. GLOBAL PROJECT ARCHITECTURE
-# -------------------------------------------------
-The project uses a Modular Monolith architecture designed for 
-future microservices separation. All code MUST follow this structure:
+[project]
+name = "edvance"
+tech_stack = ["NestJS", "Prisma", "PostgreSQL", "Supabase (optional)"]
+validation = ["class-validator", "class-transformer"]
+auth = "JWT via TokenService"
+response_format = "ResponseService"
 
-src/
-  modules/<feature>/
-    dto/
-    entities/
-    <feature>.controller.ts
-    <feature>.service.ts
-    <feature>.module.ts
+[structure.root]
+files = [".env", ".gitignore", "README.md", "package.json", "eslint.config.mjs", "nest-cli.json", "tsconfig*.json", ".prettierrc"]
 
-config/
-common/
-  decorators/
-  guards/
-  interceptors/
-  pipes/
-supabase-schema.sql
-README.md
-PROJECT_STRUCTURE.md
+[structure.prisma]
+schema = "prisma/schema.prisma"
+output = "generated/prisma"
 
-Rules:
-- NEVER put business logic outside module services.
-- NEVER share internal logic between modules.
-- NEVER import a module's service into another module.
-- ALWAYS use clients or shared interfaces for future microservices.
-- ALWAYS follow strict separation: controller → service → DB.
+[structure.src]
+main = "main.ts"
+app_module = "app.module.ts"
+app_controller = "app.controller.ts"
+app_service = "app.service.ts"
 
-# -------------------------------------------------
-# 2. MODULE GENERATION RULES
-# -------------------------------------------------
-When creating a new module, Windsurf MUST generate:
+[structure.common]
+config = "common/config/env.config.ts"
+services = ["token.service.ts", "encryption.service.ts", "response.service.ts"]
+utils = "common/utils/validation.utils.ts"
+middleware = ["auth.middleware.ts", "admin.middleware.ts"]
 
-modules/<feature>/
-  entities/<entity>.entity.ts
-  dto/create-<entity>.dto.ts
-  dto/update-<entity>.dto.ts
-  dto/<entity>-response.dto.ts
-  <feature>.controller.ts
-  <feature>.service.ts
-  <feature>.module.ts
+[structure.config]
+prisma = ["prisma.module.ts", "prisma.service.ts"]
+supabase = ["supabase.module.ts", "supabase.service.ts"]
 
-Rules:
-- DTOs MUST use class-validator decorators.
-- Entities MUST be TypeScript interfaces (not classes).
-- Services MUST contain all business logic.
-- Controllers MUST only contain HTTP routing logic.
-- Modules MUST export services only when required.
+[modules.auth]
+files = ["auth.controller.ts", "auth.service.ts", "auth.module.ts"]
+dtos = ["signin.dto.ts", "signup.dto.ts", "refresh-token.dto.ts", "auth-response.dto.ts", "userPreference.dto.ts"]
+enums = ["role.enum.ts"]
 
-# -------------------------------------------------
-# 3. DATABASE (SUPABASE) RULES
-# -------------------------------------------------
-Every service MUST:
+[env.required]
+keys = ["DATABASE_URL", "JWT_SECRET", "PORT", "NODE_ENV"]
 
-- Validate DB configuration using:
-    isSupabaseConfigured()
-- Use correct DB client:
-    getSupabase()
-    getSupabaseAdmin()
-- Follow RLS (Row Level Security).
-- Ensure table queries are tenant-scoped if multi-tenant.
-- Return clean DTO responses.
-- Never expose internal Supabase error details.
+[env.optional]
+keys = ["JWT_EXPIRES_IN", "SUPABASE_URL", "SUPABASE_KEY"]
 
-Never:
-- Never expose SERVICE_ROLE_KEY in logs or responses.
-- Never generate raw SQL unless updating supabase-schema.sql.
+env_getters = ["databaseUrl", "jwtSecret", "jwtExpiresIn", "port", "nodeEnv", "isDevelopment", "isProduction", "isTest", "supabaseUrl", "supabaseKey"]
 
-# -------------------------------------------------
-# 4. SECURITY RULES
-# -------------------------------------------------
-- Controllers MUST validate request bodies using DTOs.
-- Never accept raw request.body without a DTO.
-- Sensitive values MUST NOT appear in error messages.
-- `.env` MUST ALWAYS be gitignored.
-- Always sanitize and whitelist inputs.
-- Enforce RLS for ALL tables in Supabase.
-- Only backend services may use service-role key.
+[prisma]
+datasource = "postgresql"
+models = ["Users", "UserPreferences", "Donations", "Volunteers", "HelpRequests", "Causes"]
+enums = ["DonationType", "DonationStatus", "PaymentStatus", "Status", "AvailabilityStatus", "MediaType"]
+service_behavior = "connect on init, disconnect on destroy"
 
-# -------------------------------------------------
-# 5. CLEAN CODE & ARCHITECTURAL RULES
-# -------------------------------------------------
-Controller Rules:
-- NO business logic inside controllers.
-- Only call service methods.
-- Return response DTOs.
+typical_usage = [
+  "this.prisma.users.findUnique({...})",
+  "this.prisma.users.create({...})"
+]
 
-Service Rules:
-- Business logic ONLY.
-- DB operations ONLY here.
-- Must return sanitized, safe entities.
-- Must check Supabase config BEFORE any DB call.
+[supabase]
+service = "SupabaseService"
+required_env = ["SUPABASE_URL", "SUPABASE_KEY"]
+error_behavior = "Throw if env missing"
 
-DTO Rules:
-- Use class-validator.
-- Create-DTOs require mandatory fields.
-- Update-DTOs must have optional fields.
-- Response DTOs MUST control data shape returned to API.
+[validation]
+method = "DTO + class-validator"
+nested = "class-transformer @Type"
+utils = ["isValidEmail", "isValidPassword", "sanitizeString"]
 
-# -------------------------------------------------
-# 6. MICROSERVICE FUTURE-READY REQUIREMENTS
-# -------------------------------------------------
-Your code MUST be future-separable into microservices.
+[request_response]
+controller_prefix = true
+response_service = true
+auth_response = "LoginResponseDTO(token, refrashToken, user)"
+errors = ["BadRequest", "Conflict", "NotFound", "Unauthorized", "Forbidden", "InternalServerError"]
 
-Therefore Windsurf must:
-- NEVER tightly couple modules.
-- Use client abstraction patterns for cross-module access.
-- Keep all shared DTOs, contracts, interfaces inside:
-    /common or /libs
+[auth_security.token_service]
+methods = ["generateJWTToken", "verifyJWTToken", "decodeJWTToken"]
 
-NOT allowed:
-- Sharing business logic
-- Cross-module imports of internal logic
-- Hardcoded paths that break when splitting into microservices
+[auth_security.auth_middleware]
+requires_header = "Authorization: Bearer <token>"
+extracts = ["req.token", "req.user"]
 
-Allowed:
-- Clients
-- Interfaces
-- Shared DTOs
-- Event emitters / event bus patterns
+[auth_security.admin_middleware]
+requires = "role == ADMIN"
 
-# -------------------------------------------------
-# 7. TESTING RULES
-# -------------------------------------------------
-When generating tests:
-- Use Jest
-- Controllers → light tests
-- Services → heavy tests
-- Mock Supabase calls
-- E2E tests go under /test
+[module_wiring]
+imports = ["ConfigModule", "SupabaseModule", "AuthModule", "PrismaModule", "UserModule", "CommonModule", "DonationModule", "VolunteerModule", "HelpRequestModule", "CausesModule"]
 
-# -------------------------------------------------
-# 8. DOCUMENTATION RULES
-# -------------------------------------------------
-Whenever Windsurf generates or modifies code:
+[coding_conventions]
+- "Use DTOs for validation"
+- "Keep controllers thin"
+- "Use EnvConfigService instead of process.env"
+- "Normalized responses via ResponseService"
+- "Use enums for roles & statuses"
+- "Prisma schema is the source of truth"
+- "JWT payload contains userId, email, role"
 
-- Update README.md if:
-  - New endpoints added
-  - Installation changes
-  - New environment variables added
+[setup]
+steps = [
+  "Install deps: npm ci or npm install",
+  "Configure .env",
+  "Run npx prisma generate",
+  "Run migrations/seed",
+  "Start app"
+]
 
-- Update PROJECT_STRUCTURE.md if:
-  - A new module is created
-  - Architecture is expanded
-  - Folder structure changes
+[replication]
+steps = [
+  "Copy folder skeleton",
+  "Copy src/common",
+  "Copy prisma config and schema",
+  "Add Supabase only if needed",
+  "Set up EnvConfigService",
+  "Create modules",
+  "Apply middlewares",
+  "Configure JWT",
+  "Implement DTO validation"
+]
 
-- Update supabase-schema.sql if:
-  - Tables / indexes / RLS policies added
+[endpoints_examples]
+[ endpoints_examples.auth_signup ]
+method = "POST"
+path = "/auth/signup"
+process = ["validate SignupDto", "create Users + prefs", "return summary"]
 
-- New modules MUST HAVE their own README:
-  e.g., users module → USERS_MODULE_README.md
+[ endpoints_examples.auth_signin ]
+method = "POST"
+path = "/auth/signin"
+process = ["validate SigninDto", "verify password", "issue token + refresh", "return LoginResponseDTO"]
 
-# -------------------------------------------------
-# 9. RESPONSE RULES FOR WINDSURF
-# -------------------------------------------------
-When user says: “Create a module”
-→ Generate full module (dto, entity, service, controller, module).
-→ Register module in app.module.ts.
-→ Update documentation.
-
-When user says: “Add a feature”
-→ Follow architecture.
-→ Add DTOs.
-→ Update service logic ONLY.
-→ Modify DB schema when necessary.
-→ Update documentation.
-
-When user says: “Make this microservice-ready”
-→ Use clients and interfaces.
-→ Remove direct cross-module imports.
-→ Ensure module independence.
-
-# -------------------------------------------------
-# 10. CODE QUALITY RULES
-# -------------------------------------------------
-- Follow NestJS best practices.
-- Follow TypeScript strict mode.
-- Use async/await everywhere.
-- Avoid ANY type.
-- Use interfaces for type definitions.
-- Services must remain stateless.
-- Functions must be pure where possible.
-
-# -------------------------------------------------
-# 11. COMMANDS WINDSURF SHOULD USE
-# -------------------------------------------------
-Use these commands when asked to run, check, or test code:
-
-npm run start:dev
-npm run start
-npm run test
-npm run lint
-npm run format
-npm audit
-
-# -------------------------------------------------
-# 12. FINAL PRINCIPLE
-# -------------------------------------------------
-Windsurf's job is to ALWAYS keep the project:
-
-- Modular
-- Clean
-- Secure
-- Scalable
-- Microservice-ready
-- Fully documented
-
-Violating architecture rules is NOT allowed under any circumstances.
-
-# END OF RULES
+[output.preferences]
+prioritize_code_over_long_text = true
+text_should_be_concise = true
+avoid_unnecessary_explanations = true
+token_efficiency = "Use tokens primarily for generating effective, high-quality code."
