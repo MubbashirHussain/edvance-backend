@@ -123,6 +123,11 @@ model User {
   schoolId String? @map("school_id")
   school   School? @relation(fields: [schoolId], references: [id])
 
+  // Track who created this user
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers User[]  @relation("UserCreatedBy")
+
   @@map("users")
   @@schema("public")
 }

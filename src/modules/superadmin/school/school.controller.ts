@@ -1,15 +1,16 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { SchoolService } from './school.service';
 import { CreateSchoolDto } from './dto/create-school.dto';
-import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { CustomJwtGuard } from '@common/guards/custom-jwt.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { UserRole } from '@common/enums/user-role.enum';
 import { RolesGuard } from '@common/guards/roles.guard';
 
 @ApiTags('superadmin/school')
 @Controller('superadmin/school')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(CustomJwtGuard, RolesGuard)
 @Roles(UserRole.SUPER_ADMIN)
 @ApiBearerAuth()
 export class SchoolController {
@@ -25,7 +26,10 @@ export class SchoolController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 409, description: 'Conflict.' })
   @ApiBody({ type: CreateSchoolDto })
-  async createSchool(@Body() createSchoolDto: CreateSchoolDto) {
-    return this.schoolService.createSchool(createSchoolDto);
+  async createSchool(
+    @Body() createSchoolDto: CreateSchoolDto, 
+    @Req() req: Request & { user: { userId: string } }
+  ) {
+    return this.schoolService.createSchool(createSchoolDto, req);
   }
 }

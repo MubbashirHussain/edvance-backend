@@ -138,20 +138,7 @@ export class CreateSchoolDto {
   @IsString()
   country?: string;
 
-  @ApiProperty({
-    description: 'The email for the school admin account.',
-    example: 'admin@greenwood.com',
-  })
-  @IsEmail()
-  adminEmail: string;
-
-  @ApiProperty({
-    description: 'The password for the school admin account.',
-    example: 'strongPassword123',
-  })
-  @IsString()
-  @MinLength(8)
-  adminPassword: string;
+  // Admin credentials are no longer needed here as they will be created separately
 
   @ApiProperty({
     description: 'The subscription plan for the school.',

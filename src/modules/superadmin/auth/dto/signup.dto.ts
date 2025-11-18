@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
-import { Role } from '../../../../../generated/prisma';
+import { UserRole } from '../../../../common/enums/user-role.enum';
 
 export class SuperAdminSignupDto {
   @IsEmail()
@@ -26,6 +26,6 @@ export class SuperAdminSignupDto {
   @IsOptional()
   phone?: string;
 
-  @IsEnum(Role, { message: 'Invalid role' })
-  role: Role = Role.SUPER_ADMIN; // Default to SUPER_ADMIN for this DTO
+  @IsEnum(UserRole, { message: 'Invalid role' })
+  role: UserRole = UserRole.SUPER_ADMIN; // Default to SUPER_ADMIN for this DTO
 }
