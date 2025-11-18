@@ -7,10 +7,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-  schemas  = ["public"]
+  schemas   = ["public"]
 }
 
 enum Role {
@@ -21,7 +21,7 @@ enum Role {
   SCHOOL_STUDENT
   SCHOOL_PARENT
   SCHOOL_GUEST
-  
+
   @@schema("public")
 }
 
@@ -30,7 +30,74 @@ enum UserStatus {
   INACTIVE
   SUSPENDED
   PENDING_VERIFICATION
-  
+
+  @@schema("public")
+}
+
+enum SchoolStatus {
+  ACTIVE
+  TRIAL
+  PAUSED
+  INACTIVE
+
+  @@schema("public")
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+
+  @@schema("public")
+}
+
+enum SchoolPlan {
+  FREE
+  BASIC
+  PREMIUM
+
+  @@schema("public")
+}
+
+model School {
+  id              String     @id @default(uuid())
+  name            String     @unique
+  domain          String     @unique
+  logoUrl         String?    @map("logo_url")
+  faviconUrl      String?    @map("favicon_url")
+  primaryColor    String?    @map("primary_color")
+  secondaryColor  String?    @map("secondary_color")
+  contactName     String?    @map("contact_name")
+  contactEmail    String?    @map("contact_email")
+  contactPhone    String?    @map("contact_phone")
+  address         String?
+  city            String?
+  state           String?
+  postalCode      String?    @map("postal_code")
+  country         String?
+  latitude        Decimal?
+  longitude       Decimal?
+  plan            SchoolPlan   @default(FREE)
+  status          SchoolStatus @default(TRIAL)
+  billingCycle    BillingCycle @default(MONTHLY) @map("billing_cycle")
+
+  allowStudentsModule       Boolean @default(false) @map("allow_students_module")
+  allowTeachersModule       Boolean @default(false) @map("allow_teachers_module")
+  allowParentModule         Boolean @default(false) @map("allow_parent_module")
+  allowFeeModule            Boolean @default(false) @map("allow_fee_module")
+  allowAttendanceModule     Boolean @default(false) @map("allow_attendance_module")
+  allowExamsModule          Boolean @default(false) @map("allow_exams_module")
+  allowTimeTableModule      Boolean @default(false) @map("allow_time_table_module")
+  allowCommunicationModule  Boolean @default(false) @map("allow_communication_module")
+  allowReportsModule        Boolean @default(false) @map("allow_reports_module")
+  allowSettingsModule       Boolean @default(false) @map("allow_settings_module")
+  allowUserManagementModule Boolean @default(false) @map("allow_user_management_module")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@map("schools")
   @@schema("public")
 }
 
@@ -52,6 +119,9 @@ model User {
   profileImage    String?    @map("profile_image")
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  schoolId String? @map("school_id")
+  school   School? @relation(fields: [schoolId], references: [id])
 
   @@map("users")
   @@schema("public")
