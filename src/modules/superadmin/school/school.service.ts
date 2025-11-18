@@ -9,6 +9,7 @@ import { CustomJwtGuard } from '../../../common/guards/custom-jwt.guard';
 import { UserRole } from '../../../common/enums/user-role.enum';
 import { UserStatus } from '../../../common/enums/user-status.enum';
 import { PaginationParamsDto } from '../../../common/dto/pagination-params.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SchoolService {
@@ -47,6 +48,7 @@ export class SchoolService {
 
     // Generate a random password for the new admin
     const randomPassword = Math.random().toString(36).slice(-10);
+    const hashPassword = await bcrypt.hash(randomPassword, 10);
     const adminEmail = `admin@${schoolData.domain}.com`;
 
     try {
@@ -62,7 +64,7 @@ export class SchoolService {
         const newAdmin = await prisma.user.create({
           data: {
             email: adminEmail,
-            password: randomPassword, // Temporary password, should be changed on first login
+            password: hashPassword, // Temporary password, should be changed on first login
             role: UserRole.SCHOOL_ADMIN,
             status: UserStatus.ACTIVE as any, // Using 'as any' to match Prisma's expected type
             schoolId: newSchool.id,
@@ -75,7 +77,7 @@ export class SchoolService {
         });
 
         // Return both the school and the admin user, but without the password
-        const { password, ...adminResult } = newAdmin;
+        const { password : randomPassword, ...adminResult } = newAdmin;
         return { school: newSchool, admin: adminResult };
       });
 

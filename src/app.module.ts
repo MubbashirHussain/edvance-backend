@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { CommonModule } from './common/common.module';
 import { SuperAdminModule } from './modules/superadmin/superadmin.module';
+import { SchoolModule } from './modules/school/school.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { SuperAdminModule } from './modules/superadmin/superadmin.module';
     }),
     CommonModule,
     SuperAdminModule,
+    SchoolModule,
   ],
   controllers: [AppController],
   providers: [AppService],
