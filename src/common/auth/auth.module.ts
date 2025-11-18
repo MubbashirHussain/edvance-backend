@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { JwtStrategy } from '../strategies/jwt.strategy';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { CommonModule } from '../common.module';
+import { CustomJwtGuard } from '../guards/custom-jwt.guard';
 
 @Module({
   imports: [CommonModule],
-  providers: [JwtStrategy, JwtAuthGuard, RolesGuard],
-  exports: [JwtAuthGuard, RolesGuard],
+  providers: [CustomJwtGuard, RolesGuard],
+  exports: [CustomJwtGuard, RolesGuard],
 })
 export class AuthModule {}
