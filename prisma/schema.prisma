@@ -94,6 +94,10 @@ model School {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Track who created this school
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("SchoolCreatedBy", fields: [createdById], references: [id])
 
   users User[]
 
@@ -127,6 +131,9 @@ model User {
   createdById String? @map("created_by_id")
   createdBy   User?   @relation("UserCreatedBy", fields: [createdById], references: [id])
   createdUsers User[]  @relation("UserCreatedBy")
+  
+  // Schools created by this user
+  createdSchools School[] @relation("SchoolCreatedBy")
 
   @@map("users")
   @@schema("public")

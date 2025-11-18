@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req, Get, Query, Param, Put, Delete, Patch } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { SchoolService } from './school.service';
@@ -7,6 +7,8 @@ import { CustomJwtGuard } from '@common/guards/custom-jwt.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { UserRole } from '@common/enums/user-role.enum';
 import { RolesGuard } from '@common/guards/roles.guard';
+import { PaginationParamsDto } from '@app/common/dto/pagination-params.dto';
+import { UpdateSchoolDto } from './dto/update-school.dto';
 
 @ApiTags('superadmin/school')
 @Controller('superadmin/school')
@@ -31,5 +33,53 @@ export class SchoolController {
     @Req() req: Request & { user: { userId: string } }
   ) {
     return this.schoolService.createSchool(createSchoolDto, req);
+  }
+
+  @Get('all')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get all schools' })
+  @ApiResponse({ status: 200, description: 'List of schools' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not Found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async findAll(@Query() pagination: PaginationParamsDto) {
+    return this.schoolService.findAll(pagination);
+  }
+
+  @Get('one/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get a school by ID' })
+  @ApiResponse({ status: 200, description: 'School found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not Found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async findOne(@Param('id') id: string) {
+    return this.schoolService.findOne(id);
+  }
+
+  @Patch('update/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update a school by ID' })
+  @ApiResponse({ status: 200, description: 'School updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not Found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async update(@Param('id') id: string, @Body() updateSchoolDto: UpdateSchoolDto) {
+    return this.schoolService.update(id, updateSchoolDto);
+  }
+
+  @Delete('delete/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete a school by ID' })
+  @ApiResponse({ status: 200, description: 'School deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not Found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async delete(@Param('id') id: string) {
+    return this.schoolService.remove(id);
   }
 }
