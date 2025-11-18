@@ -1,11 +1,17 @@
-
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { SchoolService } from './school.service';
 import { CreateSchoolDto } from './dto/create-school.dto';
+import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { Roles } from '@common/decorators/roles.decorator';
+import { UserRole } from '@common/enums/user-role.enum';
+import { RolesGuard } from '@common/guards/roles.guard';
 
 @ApiTags('superadmin/school')
 @Controller('superadmin/school')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.SUPER_ADMIN)
+@ApiBearerAuth()
 export class SchoolController {
   constructor(private readonly schoolService: SchoolService) {}
 
