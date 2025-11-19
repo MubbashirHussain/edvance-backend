@@ -59,26 +59,26 @@ enum SchoolPlan {
 }
 
 model School {
-  id              String     @id @default(uuid())
-  name            String     @unique
-  domain          String     @unique
-  logoUrl         String?    @map("logo_url")
-  faviconUrl      String?    @map("favicon_url")
-  primaryColor    String?    @map("primary_color")
-  secondaryColor  String?    @map("secondary_color")
-  contactName     String?    @map("contact_name")
-  contactEmail    String?    @map("contact_email")
-  contactPhone    String?    @map("contact_phone")
-  address         String?
-  city            String?
-  state           String?
-  postalCode      String?    @map("postal_code")
-  country         String?
-  latitude        Decimal?
-  longitude       Decimal?
-  plan            SchoolPlan   @default(FREE)
-  status          SchoolStatus @default(TRIAL)
-  billingCycle    BillingCycle @default(MONTHLY) @map("billing_cycle")
+  id             String       @id @default(uuid())
+  name           String       @unique
+  domain         String       @unique
+  logoUrl        String?      @map("logo_url")
+  faviconUrl     String?      @map("favicon_url")
+  primaryColor   String?      @map("primary_color")
+  secondaryColor String?      @map("secondary_color")
+  contactName    String?      @map("contact_name")
+  contactEmail   String?      @map("contact_email")
+  contactPhone   String?      @map("contact_phone")
+  address        String?
+  city           String?
+  state          String?
+  postalCode     String?      @map("postal_code")
+  country        String?
+  latitude       Decimal?
+  longitude      Decimal?
+  plan           SchoolPlan   @default(FREE)
+  status         SchoolStatus @default(TRIAL)
+  billingCycle   BillingCycle @default(MONTHLY) @map("billing_cycle")
 
   allowStudentsModule       Boolean @default(false) @map("allow_students_module")
   allowTeachersModule       Boolean @default(false) @map("allow_teachers_module")
@@ -94,12 +94,15 @@ model School {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  
+
   // Track who created this school
   createdById String? @map("created_by_id")
   createdBy   User?   @relation("SchoolCreatedBy", fields: [createdById], references: [id])
 
-  users User[]
+  users     User[]
+  students  Student[]
+  parents   Parent[]
+  addresses Address[]
 
   @@map("schools")
   @@schema("public")
@@ -109,9 +112,9 @@ model User {
   id              String     @id @default(uuid())
   email           String     @unique
   password        String
-  firstName       String
-  middleName      String?
-  lastName        String
+  firstName       String     @default("") @map("first_name")
+  middleName      String?    @map("middle_name")
+  lastName        String     @default("") @map("last_name")
   role            Role       @default(USER)
   status          UserStatus @default(PENDING_VERIFICATION)
   deviceId        String?    @map("device_id")
@@ -124,17 +127,173 @@ model User {
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @updatedAt @map("updated_at")
 
+  // School relation
   schoolId String? @map("school_id")
   school   School? @relation(fields: [schoolId], references: [id])
 
   // Track who created this user
   createdById String? @map("created_by_id")
-  createdBy   User?   @relation("UserCreatedBy", fields: [createdById], references: [id])
-  createdUsers User[]  @relation("UserCreatedBy")
-  
-  // Schools created by this user
-  createdSchools School[] @relation("SchoolCreatedBy")
+  createdBy   User?   @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  // Relations for tracking created/updated records
+  createdUsers          User[]          @relation("UserCreatedBy")
+  createdSchools        School[]        @relation("SchoolCreatedBy")
+  createdStudents       Student[]       @relation("StudentCreatedBy")
+  updatedStudents       Student[]       @relation("StudentUpdatedBy")
+  createdParents        Parent[]        @relation("ParentCreatedBy")
+  updatedParents        Parent[]        @relation("ParentUpdatedBy")
+  createdStudentParents StudentParent[] @relation("StudentParentCreatedBy")
+  createdAddresses      Address[]       @relation("AddressCreatedBy")
+  updatedAddresses      Address[]       @relation("AddressUpdatedBy")
 
   @@map("users")
+  @@schema("public")
+}
+
+// Student Management Models
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+
+  @@schema("public")
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  GRADUATED
+  TRANSFERRED
+
+  @@schema("public")
+}
+
+enum AddressType {
+  PERMANENT
+  CURRENT
+
+  @@schema("public")
+}
+
+model Student {
+  id          String   @id @default(uuid())
+  // Basic Information
+  studentId   String   @unique @map("student_id")
+  admissionNo String   @unique @map("admission_no")
+  rollNumber  String?  @map("roll_number")
+  firstName   String   @map("first_name")
+  middleName  String?  @map("middle_name")
+  lastName    String   @map("last_name")
+  dateOfBirth DateTime @map("date_of_birth")
+  gender      Gender
+  bloodGroup  String?  @map("blood_group")
+  email       String?  @unique
+  phone       String?
+  photoUrl    String?  @map("photo_url")
+
+  // Academic Information
+  currentGrade  String        @map("current_grade")
+  section       String
+  admissionDate DateTime      @map("admission_date")
+  status        StudentStatus @default(ACTIVE)
+
+  // Relations
+  schoolId  String          @map("school_id")
+  school    School          @relation(fields: [schoolId], references: [id])
+  parents   StudentParent[]
+  addresses Address[]       @relation("StudentAddresses")
+
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+  createdBy   User?    @relation("StudentCreatedBy", fields: [createdById], references: [id])
+  updatedById String?  @map("updated_by_id")
+  updatedBy   User?    @relation("StudentUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("students")
+  @@schema("public")
+}
+
+model Parent {
+  id            String  @id @default(uuid())
+  // Personal Information
+  firstName     String  @map("first_name")
+  middleName    String? @map("middle_name")
+  lastName      String  @map("last_name")
+  cnic          String? @unique
+  email         String? @unique
+  phone         String
+  occupation    String?
+  education     String? // Highest education level
+  monthlyIncome Float?  @map("monthly_income")
+  isAlive       Boolean @default(true) @map("is_alive")
+
+  // Relations
+  schoolId  String          @map("school_id")
+  school    School          @relation(fields: [schoolId], references: [id])
+  students  StudentParent[]
+  addressId String?         @map("address_id")
+  address   Address?        @relation(fields: [addressId], references: [id])
+
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+  createdBy   User?    @relation("ParentCreatedBy", fields: [createdById], references: [id])
+  updatedById String?  @map("updated_by_id")
+  updatedBy   User?    @relation("ParentUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("parents")
+  @@schema("public")
+}
+
+model StudentParent {
+  studentId    String  @map("student_id")
+  student      Student @relation(fields: [studentId], references: [id])
+  parentId     String  @map("parent_id")
+  parent       Parent  @relation(fields: [parentId], references: [id])
+  relationship String
+  isPrimary    Boolean @default(false) @map("is_primary")
+
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+  createdBy   User?    @relation("StudentParentCreatedBy", fields: [createdById], references: [id])
+
+  @@id([studentId, parentId])
+  @@map("student_parents")
+  @@schema("public")
+}
+
+model Address {
+  id           String      @id @default(uuid())
+  // Address Details
+  addressLine1 String      @map("address_line1")
+  addressLine2 String?     @map("address_line2")
+  city         String
+  state        String
+  postalCode   String      @map("postal_code")
+  country      String      @default("Pakistan")
+  type         AddressType
+  isCurrent    Boolean     @default(true) @map("is_current")
+
+  // Relations
+  parents   Parent[]
+  studentId String?  @map("student_id")
+  student   Student? @relation("StudentAddresses", fields: [studentId], references: [id])
+  schoolId  String   @map("school_id")
+  school    School   @relation(fields: [schoolId], references: [id])
+
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+  createdBy   User?    @relation("AddressCreatedBy", fields: [createdById], references: [id])
+  updatedById String?  @map("updated_by_id")
+  updatedBy   User?    @relation("AddressUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("addresses")
   @@schema("public")
 }
