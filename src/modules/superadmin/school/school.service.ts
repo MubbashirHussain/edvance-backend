@@ -23,7 +23,7 @@ export class SchoolService {
     createSchoolDto: CreateSchoolDto, 
     req: Request & { user: { userId: string } }
   ) {
-    const { ...schoolData } = createSchoolDto;
+    const { adminEmail, adminPassword, ...schoolData } = createSchoolDto;
     
     // Get the authenticated admin from the request
     const authUser = req.user;
@@ -46,10 +46,8 @@ export class SchoolService {
       throw new ConflictException('A school with this name or domain already exists.');
     }
 
-    // Generate a random password for the new admin
-    const randomPassword = Math.random().toString(36).slice(-10);
-    const hashPassword = await bcrypt.hash(randomPassword, 10);
-    const adminEmail = `admin@${schoolData.domain}.com`;
+    // Hash the provided admin password
+    const hashPassword = await bcrypt.hash(adminPassword, 10);
 
     try {
       const result = await this.prisma.$transaction(async (prisma) => {
@@ -60,16 +58,16 @@ export class SchoolService {
           },
         });
 
-        // Create the school admin user with a temporary password
+        // Create the school admin user with the provided credentials
         const newAdmin = await prisma.user.create({
           data: {
             email: adminEmail,
-            password: hashPassword, // Temporary password, should be changed on first login
+            password: hashPassword,
             role: UserRole.SCHOOL_ADMIN,
             status: UserStatus.ACTIVE as any, // Using 'as any' to match Prisma's expected type
             schoolId: newSchool.id,
-            firstName: createSchoolDto.contactName || 'School',
-            lastName: 'Admin',
+            firstName: createSchoolDto.contactName?.split(' ')[0] || 'School',
+            lastName: createSchoolDto.contactName?.split(' ').slice(1).join(' ') || 'Admin',
             emailVerified: true,
             emailVerifiedAt: new Date(),
             createdById: authUser.userId, // Track who created this admin
