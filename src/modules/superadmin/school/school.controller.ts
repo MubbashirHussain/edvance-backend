@@ -1,9 +1,29 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req, Get, Query, Param, Put, Delete, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+  Get,
+  Query,
+  Param,
+  Put,
+  Delete,
+  Patch,
+} from '@nestjs/common';
 import { Request } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { SchoolService } from './school.service';
 import { CreateSchoolDto } from './dto/create-school.dto';
-import { CustomJwtGuard } from '@common/guards/custom-jwt.guard';
+import { CustomJwtGuard } from '../../../common/guards/custom-jwt.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { UserRole } from '@common/enums/user-role.enum';
 import { RolesGuard } from '@common/guards/roles.guard';
@@ -29,8 +49,8 @@ export class SchoolController {
   @ApiResponse({ status: 409, description: 'Conflict.' })
   @ApiBody({ type: CreateSchoolDto })
   async createSchool(
-    @Body() createSchoolDto: CreateSchoolDto, 
-    @Req() req: Request & { user: { userId: string } }
+    @Body() createSchoolDto: CreateSchoolDto,
+    @Req() req: Request & { user: { userId: string } },
   ) {
     return this.schoolService.createSchool(createSchoolDto, req);
   }
@@ -67,7 +87,10 @@ export class SchoolController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Not Found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async update(@Param('id') id: string, @Body() updateSchoolDto: UpdateSchoolDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateSchoolDto: UpdateSchoolDto,
+  ) {
     return this.schoolService.update(id, updateSchoolDto);
   }
 
