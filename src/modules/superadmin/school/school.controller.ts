@@ -27,7 +27,7 @@ import { CustomJwtGuard } from '../../../common/guards/custom-jwt.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { UserRole } from '../../../common/enums/user-role.enum';
 import { RolesGuard } from '../../../common/guards/roles.guard';
-import { PaginationParamsDto } from '@app/common/dto/pagination-params.dto';
+import { PaginationParamsDto } from '../../../common/dto/pagination-params.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
 
 @ApiTags('superadmin/school')
