@@ -130,6 +130,7 @@ model School {
   addresses Address[]
   subjects  Subject[]
   classes   Class[]
+  teachers  Teacher[]
 
   @@map("schools")
   @@schema("public")
@@ -182,6 +183,7 @@ model User {
   createdSubjects     Subject[]      @relation("SubjectCreatedBy")
   updatedSubjects     Subject[]      @relation("SubjectUpdatedBy")
   StudentClass        StudentClass[]
+  teacherProfile      Teacher?
 
   @@map("users")
   @@schema("public")
@@ -358,6 +360,26 @@ model Student {
   updatedBy   User?    @relation("StudentUpdatedBy", fields: [updatedById], references: [id])
 
   @@map("students")
+  @@schema("public")
+}
+
+model Teacher {
+  id       String @id @default(uuid())
+  userId   String @unique @map("user_id")
+  user     User   @relation(fields: [userId], references: [id])
+  schoolId String @map("school_id")
+  school   School @relation(fields: [schoolId], references: [id])
+
+  qualification  String?
+  experience     String?
+  specialization String?
+  joiningDate    DateTime? @map("joining_date")
+  status         String    @default("ACTIVE")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("teachers")
   @@schema("public")
 }
 

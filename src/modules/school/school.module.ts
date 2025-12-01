@@ -4,6 +4,7 @@ import { SchoolAuthModule } from './auth/school-auth.module';
 import { StudentModule } from './student/student.module';
 import { ClassModule } from './class/class.module';
 import { SubjectModule } from './subject/subject.module';
+import { TeacherModule } from './teacher/teacher.module';
 
 @Module({
   imports: [
@@ -12,12 +13,9 @@ import { SubjectModule } from './subject/subject.module';
     SchoolAuthModule,
     ClassModule,
     SubjectModule,
+    TeacherModule,
   ],
   providers: [],
-  exports: [
-    SchoolAuthModule,
-    ClassModule,
-    SubjectModule,
-  ],
+  exports: [SchoolAuthModule, ClassModule, SubjectModule, TeacherModule],
 })
-export class SchoolModule { }
+export class SchoolModule {}

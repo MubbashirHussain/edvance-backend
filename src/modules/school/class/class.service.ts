@@ -1,6 +1,14 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { CreateClassDto, ClassSubjectDto, ClassScheduleDto } from './dto/create-class.dto';
+import {
+  CreateClassDto,
+  ClassSubjectDto,
+  ClassScheduleDto,
+} from './dto/create-class.dto';
 import { ClassResponseDto } from './dto/class-response.dto';
 
 @Injectable()
@@ -41,13 +49,67 @@ export class ClassService {
       throw new NotFoundException('School not found');
     }
 
-    // Check if class teacher exists
-    const teacher = await this.prisma.user.findUnique({
-      where: { id: classTeacherId, schoolId },
+    // Check if class teacher exists (try Teacher profile first, then User)
+    let teacherUserId = classTeacherId;
+
+    // 1. Try to find by Teacher ID
+    const teacherProfile = await this.prisma.teacher.findUnique({
+      where: { id: classTeacherId },
+      select: { userId: true, schoolId: true },
     });
 
-    if (!teacher) {
-      throw new NotFoundException('Class teacher not found');
+    if (teacherProfile) {
+      if (teacherProfile.schoolId !== schoolId) {
+        throw new NotFoundException('Teacher belongs to a different school');
+      }
+      teacherUserId = teacherProfile.userId;
+    }
+
+    // Validate class teacher exists and is active in the Teacher table
+    const classTeacher = await this.prisma.teacher.findFirst({
+      where: { 
+        id: classTeacherId, 
+        schoolId,
+        status: 'ACTIVE'
+      },
+      include: {
+        user: true
+      }
+    });
+
+    if (!classTeacher) {
+      throw new NotFoundException(
+        `Class teacher with ID ${classTeacherId} not found or is not active`,
+      );
+    }
+
+    // Validate co-teachers if provided
+    if (coTeachers.length > 0) {
+      for (const coTeacherId of coTeachers) {
+        // Skip if co-teacher is the same as class teacher
+        if (coTeacherId === classTeacherId) {
+          throw new ConflictException(
+            'Class teacher cannot be added as a co-teacher',
+          );
+        }
+
+        const coTeacher = await this.prisma.teacher.findFirst({
+          where: { 
+            id: coTeacherId, 
+            schoolId,
+            status: 'ACTIVE'
+          },
+          include: {
+            user: true
+          }
+        });
+
+        if (!coTeacher) {
+          throw new NotFoundException(
+            `Co-teacher with ID ${coTeacherId} not found or is not active`,
+          );
+        }
+      }
     }
 
     // Create the class with transaction to ensure data consistency
@@ -61,8 +123,8 @@ export class ClassService {
           academicYear,
           gradeLevel,
           section,
-          classTeacherId,
-          coTeachers,
+          classTeacherId: classTeacher.userId,
+          coTeachers: coTeachers || [],
           capacity,
           currentStrength: 0, // Initialize with 0 students
           settings: settings as any, // Type assertion as Prisma.JsonValue
@@ -72,6 +134,25 @@ export class ClassService {
 
       // Add class subjects if provided
       if (subjects.length > 0) {
+        // Validate all subject teachers first
+        for (const subject of subjects) {
+          const subjectTeacher = await prisma.teacher.findUnique({
+            where: { id: subject.teacherId, schoolId },
+          });
+
+          if (!subjectTeacher) {
+            throw new NotFoundException(
+              `Subject teacher with ID ${subject.teacherId} not found`,
+            );
+          }
+
+          if (subjectTeacher.status !== 'ACTIVE') {
+            throw new ConflictException(
+              `Teacher with ID ${subject.teacherId} is not active`,
+            );
+          }
+        }
+
         await Promise.all(
           subjects.map((subject: ClassSubjectDto) =>
             prisma.classSubject.create({
@@ -100,7 +181,11 @@ export class ClassService {
         );
       }
 
-      return createdClass;
+      return {
+        ...createdClass,
+        classTeacher,
+        coTeachers: coTeachers
+      };
     });
 
     // Fetch the created class with relations for the response
