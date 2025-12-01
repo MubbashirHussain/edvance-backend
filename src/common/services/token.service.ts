@@ -1,8 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, UnauthorizedException, CanActivate } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { Request } from 'express';
 
 type TokenType = 'access' | 'refresh';
+
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  [key: string]: any;
+}
+
+@Injectable()
+export class JwtAuthGuard implements CanActivate {
+  constructor(private jwtService: JwtService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const token = this.extractTokenFromHeader(request);
+    
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+    
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_ACCESS_SECRET,
+      });
+      
+      // Attach the user payload to the request object
+      request.user = payload;
+      return true;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
+  }
+}
 
 @Injectable()
 export class TokenService {
@@ -35,7 +73,6 @@ export class TokenService {
   }
 
   private async generateToken(payload: JwtPayload, type: TokenType): Promise<string> {
-    // Create a new object with only the required properties
     const tokenPayload = {
       sub: payload.sub,
       email: payload.email,
@@ -43,23 +80,32 @@ export class TokenService {
     };
 
     return this.jwtService.signAsync(
-      tokenPayload as any, // Temporary type assertion to avoid type issues
+      tokenPayload,
       {
         secret: this.getSecret(type),
         expiresIn: this.getExpiresIn(type),
-      } as any,
+      } as any
     );
   }
 
-  async verifyToken(token: string, isRefreshToken = false): Promise<JwtPayload | null> {
+  async verifyToken(token: string, type: TokenType = 'access'): Promise<JwtPayload> {
     try {
-      const type: TokenType = isRefreshToken ? 'refresh' : 'access';
-      return await this.jwtService.verifyAsync<JwtPayload>(token, {
-        secret: this.getSecret(type),
-      });
+      const secret = this.getSecret(type);
+      const payload = await this.jwtService.verifyAsync(token, { secret });
+      return {
+        sub: payload.sub,
+        email: payload.email,
+        role: payload.role,
+      };
     } catch (error) {
-      return null;
+      throw new UnauthorizedException('Invalid token');
     }
+  }
+
+  async validateUser(payload: JwtPayload): Promise<JwtPayload> {
+    // Here you can add additional validation if needed
+    // For example, check if the user exists in the database
+    return payload;
   }
 
   getPayloadFromToken(token: string): JwtPayload | null {

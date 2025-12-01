@@ -21,7 +21,32 @@ enum Role {
   SCHOOL_STUDENT
   SCHOOL_PARENT
   SCHOOL_GUEST
+  SCHOOL_TEACHER
 
+  @@schema("public")
+}
+
+model Subject {
+  id            String         @id @default(uuid())
+  name          String
+  code          String
+  description   String?
+  isActive      Boolean        @default(true) @map("is_active")
+  schoolId      String         @map("school_id")
+  school        School         @relation(fields: [schoolId], references: [id])
+  classSubjects ClassSubject[] @relation("SubjectClasses")
+
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+  createdBy   User?    @relation("SubjectCreatedBy", fields: [createdById], references: [id])
+  updatedById String?  @map("updated_by_id")
+  updatedBy   User?    @relation("SubjectUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([code, schoolId], name: "subject_code_school_unique")
+  @@index([schoolId])
+  @@map("subjects")
   @@schema("public")
 }
 
@@ -103,6 +128,8 @@ model School {
   students  Student[]
   parents   Parent[]
   addresses Address[]
+  subjects  Subject[]
+  classes   Class[]
 
   @@map("schools")
   @@schema("public")
@@ -146,7 +173,126 @@ model User {
   createdAddresses      Address[]       @relation("AddressCreatedBy")
   updatedAddresses      Address[]       @relation("AddressUpdatedBy")
 
+  // Class-related relations
+  classesTaught       Class[]        @relation("ClassTeacher")
+  classSubjects       ClassSubject[]
+  studentClassRecords StudentClass[] @relation("StudentClassCreatedBy")
+  createdClasses      Class[]        @relation("ClassCreatedBy")
+  updatedClasses      Class[]        @relation("ClassUpdatedBy")
+  createdSubjects     Subject[]      @relation("SubjectCreatedBy")
+  updatedSubjects     Subject[]      @relation("SubjectUpdatedBy")
+  StudentClass        StudentClass[]
+
   @@map("users")
+  @@schema("public")
+}
+
+// Class Management Enums
+enum ClassStatus {
+  ACTIVE
+  INACTIVE
+  GRADUATED
+  TRANSFERRED
+
+  @@schema("public")
+}
+
+// Class Management Models
+model Class {
+  id              String   @id @default(uuid())
+  schoolId        String   @map("school_id")
+  className       String   @map("class_name")
+  classCode       String   @unique @map("class_code")
+  academicYear    String   @map("academic_year")
+  gradeLevel      String   @map("grade_level")
+  section         String
+  classTeacherId  String   @map("class_teacher_id")
+  coTeachers      String[] @default([]) @map("co_teachers")
+  capacity        Int
+  currentStrength Int      @default(0) @map("current_strength")
+  settings        Json
+  isActive        Boolean  @default(true) @map("is_active")
+
+  // Relations
+  school       School          @relation(fields: [schoolId], references: [id])
+  classTeacher User            @relation("ClassTeacher", fields: [classTeacherId], references: [id])
+  subjects     ClassSubject[]
+  schedule     ClassSchedule[]
+  students     StudentClass[]
+
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+  createdBy   User?    @relation("ClassCreatedBy", fields: [createdById], references: [id])
+  updatedById String?  @map("updated_by_id")
+  updatedBy   User?    @relation("ClassUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("classes")
+  @@schema("public")
+}
+
+model ClassSubject {
+  id        String @id @default(uuid())
+  classId   String @map("class_id")
+  subjectId String @map("subject_id")
+  teacherId String @map("teacher_id")
+
+  // Relations
+  class_  Class   @relation(fields: [classId], references: [id])
+  subject Subject @relation("SubjectClasses", fields: [subjectId], references: [id])
+  teacher User    @relation(fields: [teacherId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([classId, subjectId])
+  @@index([subjectId])
+  @@index([teacherId])
+  @@map("class_subjects")
+  @@schema("public")
+}
+
+model ClassSchedule {
+  id      String @id @default(uuid())
+  classId String @map("class_id")
+  day     String // Monday, Tuesday, etc.
+  periods Json // Array of periods with time and subject info
+
+  // Relations
+  class_ Class @relation(fields: [classId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([classId])
+  @@map("class_schedules")
+  @@schema("public")
+}
+
+model StudentClass {
+  id        String      @id @default(uuid())
+  studentId String      @map("student_id")
+  classId   String      @map("class_id")
+  status    ClassStatus @default(ACTIVE)
+  joinedAt  DateTime    @default(now()) @map("joined_at")
+  leftAt    DateTime?   @map("left_at")
+
+  // Relations
+  student User  @relation(fields: [studentId], references: [id])
+  class_  Class @relation(fields: [classId], references: [id])
+
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+  createdBy   User?    @relation("StudentClassCreatedBy", fields: [createdById], references: [id])
+
+  @@unique([studentId, classId])
+  @@index([classId])
+  @@map("student_classes")
   @@schema("public")
 }
 

@@ -1,98 +1,347 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Edvance Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A comprehensive school management system backend API built with NestJS, Prisma, and PostgreSQL.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 Table of Contents
 
-## Description
+- [Overview](#overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [Documentation](#documentation)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [Development](#development)
+- [Contributing](#contributing)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🎯 Overview
 
-## Project setup
+Edvance Backend is a robust, scalable school management system API that provides comprehensive features for managing schools, students, teachers, classes, subjects, and more. Built with modern technologies and best practices, it offers a solid foundation for educational institutions.
 
-```bash
-$ yarn install
+## ✨ Features
+
+### Current Features
+
+- 🔐 **Authentication & Authorization**
+  - JWT-based authentication
+  - Role-based access control (RBAC)
+  - Refresh token mechanism
+  - Multi-tenant support
+
+- 🏫 **School Management**
+  - School CRUD operations
+  - Multi-school support
+  - School-specific configurations
+  - Module-based permissions
+
+- 👨‍🎓 **Student Management**
+  - Student CRUD operations
+  - Parent-student relationships
+  - Student profiles with comprehensive data
+  - Pagination and filtering
+
+- 📚 **Subject Management**
+  - Subject CRUD operations
+  - School-specific subjects
+  - Subject-class associations
+
+- 🏛 **Class Management**
+  - Class CRUD operations
+  - Teacher assignments
+  - Student enrollment
+  - Class schedules
+
+### Upcoming Features
+
+- 👨‍🏫 Teacher Management
+- 👪 Parent Portal
+- 💰 Fee Management
+- 📊 Attendance System
+- 📝 Examination System
+- 📅 Timetable Management
+- 💬 Communication Module
+- 📈 Reports & Analytics
+
+## 🛠 Technology Stack
+
+- **Framework**: NestJS 10.x
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **ORM**: Prisma 6.16.1
+- **Authentication**: JWT
+- **Validation**: class-validator, class-transformer
+- **Documentation**: Swagger/OpenAPI
+- **Runtime**: Node.js
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- PostgreSQL (v14 or higher)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd edvance-backend
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Set up environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Update the `.env` file with your configuration:
+
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/edvance"
+   DIRECT_URL="postgresql://user:password@localhost:5432/edvance"
+   JWT_ACCESS_SECRET="your-access-secret"
+   JWT_REFRESH_SECRET="your-refresh-secret"
+   PORT=3000
+   NODE_ENV=development
+   ```
+
+4. **Generate Prisma Client**
+
+   ```bash
+   npx prisma generate
+   ```
+
+5. **Run database migrations**
+
+   ```bash
+   npx prisma migrate dev
+   ```
+
+6. **Start the development server**
+   ```bash
+   npm run start:dev
+   # or
+   yarn start:dev
+   ```
+
+The API will be available at `http://localhost:3000/api/v1`
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `/docs` folder:
+
+- **[Codebase Overview](./docs/CODEBASE_OVERVIEW.md)** - Complete project structure and architecture guide
+- **[Module Development Guide](./docs/MODULE_DEVELOPMENT_GUIDE.md)** - Step-by-step guide for creating new modules
+- **[API Examples](./docs/api-examples/API_EXAMPLES.md)** - Request/response examples for all endpoints
+- **[Changelog](./docs/CHANGELOG.md)** - Project change tracking
+
+## 📁 Project Structure
+
+```
+edvance-backend/
+├── src/
+│   ├── main.ts                    # Application entry point
+│   ├── app.module.ts              # Root module
+│   ├── common/                    # Shared utilities and services
+│   │   ├── decorators/            # Custom decorators
+│   │   ├── dto/                   # Common DTOs
+│   │   ├── enums/                 # Enums
+│   │   ├── guards/                # Authentication & authorization guards
+│   │   ├── prisma/                # Prisma service
+│   │   └── services/              # Common services
+│   └── modules/                   # Feature modules
+│       ├── superadmin/            # Super admin module
+│       │   ├── auth/              # Super admin authentication
+│       │   └── school/            # School management
+│       └── school/                # School-specific modules
+│           ├── auth/              # School authentication
+│           ├── student/           # Student management
+│           ├── subject/           # Subject management
+│           └── class/             # Class management
+├── prisma/
+│   └── schema.prisma              # Database schema
+├── docs/                          # Documentation
+└── test/                          # Test files
 ```
 
-## Compile and run the project
+## 🔌 API Endpoints
 
-```bash
-# development
-$ yarn run start
+### Base URL
 
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+```
+http://localhost:3000/api/v1
 ```
 
-## Run tests
+### SuperAdmin
+
+- `POST /superadmin/auth/signup` - Super admin registration
+- `POST /superadmin/auth/signin` - Super admin login
+- `POST /superadmin/school/create` - Create new school
+- `GET /superadmin/school/all` - Get all schools
+
+### School Authentication
+
+- `POST /school/auth/signin` - School user login
+- `POST /school/auth/refresh` - Refresh access token
+
+### Students
+
+- `POST /school/student/create` - Create student
+- `GET /school/student` - Get all students (with pagination)
+- `GET /school/student/:id` - Get student by ID
+- `PATCH /school/student/:id` - Update student
+- `DELETE /school/student/:id` - Delete student
+
+### Subjects
+
+- `POST /school/subjects` - Create subject
+- `GET /school/subjects` - Get all subjects
+- `GET /school/subjects/:id` - Get subject by ID
+- `PUT /school/subjects/:id` - Update subject
+- `DELETE /school/subjects/:id` - Delete subject
+
+### Classes
+
+- `POST /classes` - Create class
+- `GET /classes/:id` - Get class by ID
+
+For detailed API examples with request/response payloads, see [API Examples](./docs/api-examples/API_EXAMPLES.md).
+
+## 💻 Development
+
+### Available Scripts
 
 ```bash
-# unit tests
-$ yarn run test
+# Development
+npm run start:dev        # Start development server with hot reload
 
-# e2e tests
-$ yarn run test:e2e
+# Production
+npm run build           # Build for production
+npm run start:prod      # Start production server
 
-# test coverage
-$ yarn run test:cov
+# Database
+npx prisma generate     # Generate Prisma client
+npx prisma migrate dev  # Run migrations in development
+npx prisma studio       # Open Prisma Studio (database GUI)
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run format          # Format code with Prettier
+
+# Testing
+npm run test            # Run unit tests
+npm run test:e2e        # Run e2e tests
+npm run test:cov        # Run tests with coverage
 ```
 
-## Deployment
+### Code Style Guidelines
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+This project follows NestJS best practices and conventions:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **Controllers**: Handle HTTP requests, delegate to services
+- **Services**: Contain business logic
+- **DTOs**: Use class-validator for validation
+- **Guards**: Handle authentication and authorization
+- **Modules**: Organize related features
+
+For detailed guidelines, see [Codebase Overview](./docs/CODEBASE_OVERVIEW.md).
+
+### Creating a New Module
+
+Follow the step-by-step guide in [Module Development Guide](./docs/MODULE_DEVELOPMENT_GUIDE.md) to create new modules following established patterns.
+
+## 🔐 Authentication
+
+All protected endpoints require a JWT token in the Authorization header:
+
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+### User Roles
+
+- `SUPER_ADMIN` - Full system access
+- `SCHOOL_ADMIN` - School-level administration
+- `SCHOOL_STAFF` - School staff operations
+- `SCHOOL_TEACHER` - Teacher-specific access
+- `SCHOOL_STUDENT` - Student-specific access
+- `SCHOOL_PARENT` - Parent-specific access
+
+## 🗄 Database
+
+This project uses Prisma ORM with PostgreSQL. The database schema is defined in `prisma/schema.prisma`.
+
+### Key Models
+
+- **User** - System users with role-based access
+- **School** - School entities with multi-tenant support
+- **Student** - Student profiles and information
+- **Parent** - Parent/guardian information
+- **Subject** - Academic subjects
+- **Class** - Class/grade management
+- **Teacher** - Teacher profiles (upcoming)
+
+### Prisma Commands
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+# Generate Prisma Client
+npx prisma generate
+
+# Create a migration
+npx prisma migrate dev --name migration_name
+
+# Apply migrations
+npx prisma migrate deploy
+
+# Reset database (development only)
+npx prisma migrate reset
+
+# Open Prisma Studio
+npx prisma studio
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🤝 Contributing
 
-## Resources
+We welcome contributions! Please follow these guidelines:
 
-Check out a few resources that may come in handy when working with NestJS:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Contribution Guidelines
 
-## Support
+- Follow the existing code style and patterns
+- Write meaningful commit messages
+- Update documentation as needed
+- Add tests for new features
+- Ensure all tests pass before submitting PR
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 📝 License
 
-## Stay in touch
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 👥 Team
 
-## License
+Development Team - Edvance Backend
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 🙏 Acknowledgments
+
+- Built with [NestJS](https://nestjs.com/)
+- Database ORM by [Prisma](https://www.prisma.io/)
+- Inspired by modern school management needs
+
+---
+
+For more information, please refer to the [documentation](./docs/) or open an issue.
