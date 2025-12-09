@@ -9,6 +9,7 @@ import {
   ClassSubjectDto,
   ClassScheduleDto,
 } from './dto/create-class.dto';
+import { UpdateClassDto } from './dto/update-class.dto';
 import { ClassResponseDto } from './dto/class-response.dto';
 
 @Injectable()
@@ -67,14 +68,14 @@ export class ClassService {
 
     // Validate class teacher exists and is active in the Teacher table
     const classTeacher = await this.prisma.teacher.findFirst({
-      where: { 
-        id: classTeacherId, 
+      where: {
+        id: classTeacherId,
         schoolId,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
       },
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
 
     if (!classTeacher) {
@@ -94,14 +95,14 @@ export class ClassService {
         }
 
         const coTeacher = await this.prisma.teacher.findFirst({
-          where: { 
-            id: coTeacherId, 
+          where: {
+            id: coTeacherId,
             schoolId,
-            status: 'ACTIVE'
+            status: 'ACTIVE',
           },
           include: {
-            user: true
-          }
+            user: true,
+          },
         });
 
         if (!coTeacher) {
@@ -184,12 +185,246 @@ export class ClassService {
       return {
         ...createdClass,
         classTeacher,
-        coTeachers: coTeachers
+        coTeachers: coTeachers,
       };
     });
 
     // Fetch the created class with relations for the response
     return this.getClassById(newClass.id);
+  }
+
+  async getAllClasses(): Promise<ClassResponseDto[]> {
+    const classes = await this.prisma.class.findMany({
+      include: {
+        classTeacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        subjects: {
+          include: {
+            subject: true,
+            teacher: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+        schedule: true,
+      },
+    });
+
+    return classes.map((cls) => ({
+      id: cls.id,
+      className: cls.className,
+      classCode: cls.classCode,
+      academicYear: cls.academicYear,
+      gradeLevel: cls.gradeLevel,
+      section: cls.section,
+      classTeacherId: cls.classTeacherId,
+      classTeacherName: cls.classTeacher
+        ? `${cls.classTeacher.firstName} ${cls.classTeacher.lastName}`
+        : '',
+      coTeachers: cls.coTeachers,
+      capacity: cls.capacity,
+      currentStrength: cls.currentStrength,
+      settings: cls.settings as any,
+      subjects: cls.subjects.map((sub) => ({
+        id: sub.id,
+        subjectId: sub.subjectId,
+        teacherId: sub.teacherId,
+        subjectName: (sub as any).subject?.name,
+        teacherName: (sub as any).teacher
+          ? `${(sub as any).teacher.firstName} ${(sub as any).teacher.lastName}`
+          : '',
+      })),
+      schedule: cls.schedule.map((sched) => ({
+        id: sched.id,
+        day: sched.day,
+        periods: (sched.periods as any[]) || [],
+      })),
+      createdAt: cls.createdAt,
+      updatedAt: cls.updatedAt,
+    }));
+  }
+
+  async updateClass(
+    id: string,
+    updateClassDto: UpdateClassDto,
+  ): Promise<ClassResponseDto> {
+    const {
+      className,
+      classCode,
+      academicYear,
+      gradeLevel,
+      section,
+      classTeacherId,
+      coTeachers,
+      subjects,
+      capacity,
+      schedule,
+      settings,
+      schoolId,
+    } = updateClassDto;
+
+    // Check if class exists
+    const existingClass = await this.prisma.class.findUnique({
+      where: { id },
+    });
+
+    if (!existingClass) {
+      throw new NotFoundException('Class not found');
+    }
+
+    // Check unique class code if provided
+    if (classCode && classCode !== existingClass.classCode) {
+      const duplicateClass = await this.prisma.class.findUnique({
+        where: { classCode },
+      });
+
+      if (duplicateClass) {
+        throw new ConflictException(
+          'Class with this updated code already exists',
+        );
+      }
+    }
+
+    // Validate School ID if provided (though logically it shouldn't change often)
+    const effectiveSchoolId = schoolId || existingClass.schoolId;
+    if (schoolId && schoolId !== existingClass.schoolId) {
+      const school = await this.prisma.school.findUnique({
+        where: { id: schoolId },
+      });
+      if (!school) throw new NotFoundException('School not found');
+    }
+
+    // Validate class teacher if provided
+    let finalClassTeacherUserId: string | undefined = undefined;
+    // If classTeacherId is not provided, we don't change it, so we don't need to resolve it.
+    // If it IS provided, we resolve it.
+
+    if (classTeacherId) {
+      // 1. Try to find by Teacher ID first, to map to User ID
+      const teacherProfile = await this.prisma.teacher.findUnique({
+        where: { id: classTeacherId },
+        select: { userId: true, schoolId: true, status: true },
+      });
+
+      if (teacherProfile) {
+        if (teacherProfile.schoolId !== effectiveSchoolId) {
+          throw new ConflictException(
+            'New class teacher belongs to a different school',
+          );
+        }
+        if (teacherProfile.status !== 'ACTIVE') {
+          throw new ConflictException('New class teacher is not active');
+        }
+        finalClassTeacherUserId = teacherProfile.userId;
+      } else {
+        throw new NotFoundException(
+          `Class teacher with ID ${classTeacherId} not found`,
+        );
+      }
+    }
+
+    // Validate co-teachers if provided
+    if (coTeachers) {
+      // Validate each
+      for (const coT of coTeachers) {
+        if (classTeacherId && coT === classTeacherId) {
+          throw new ConflictException('Class teacher cannot be a co-teacher');
+        }
+        // If classTeacherId didn't change, we should check against existingClass.classTeacherId?
+        // The issue is existingClass.classTeacherId stores the USER ID (from createClass line 126).
+        // But coTeachers array stores ?? createClass line 127 stores `coTeachers` directly.
+
+        const coTeacher = await this.prisma.teacher.findFirst({
+          where: { id: coT, schoolId: effectiveSchoolId, status: 'ACTIVE' },
+        });
+        if (!coTeacher)
+          throw new NotFoundException(
+            `Co-teacher ${coT} not found or inactive`,
+          );
+      }
+    }
+
+    // Perform Update Transaction
+    const updatedClass = await this.prisma.$transaction(async (prisma) => {
+      // Update main class details
+      const updated = await prisma.class.update({
+        where: { id },
+        data: {
+          className,
+          classCode,
+          academicYear,
+          gradeLevel,
+          section,
+          // Only update classTeacherId if we resolved a new one.
+          ...(finalClassTeacherUserId
+            ? { classTeacherId: finalClassTeacherUserId }
+            : {}),
+          coTeachers: coTeachers,
+          capacity,
+          settings: settings ? (settings as any) : undefined,
+        },
+      });
+
+      // Update Subjects if provided
+      if (subjects) {
+        // Delete existing
+        await prisma.classSubject.deleteMany({ where: { classId: id } });
+
+        // Validate and Create new
+        for (const subject of subjects) {
+          const subjectTeacher = await prisma.teacher.findUnique({
+            where: { id: subject.teacherId, schoolId: effectiveSchoolId },
+          });
+          if (!subjectTeacher || subjectTeacher.status !== 'ACTIVE') {
+            throw new ConflictException(
+              `Subject teacher ${subject.teacherId} invalid`,
+            );
+          }
+        }
+
+        await Promise.all(
+          subjects.map((subject) =>
+            prisma.classSubject.create({
+              data: {
+                classId: id,
+                subjectId: subject.subjectId,
+                teacherId: subject.teacherId,
+              },
+            }),
+          ),
+        );
+      }
+
+      // Update Schedule if provided
+      if (schedule) {
+        await prisma.classSchedule.deleteMany({ where: { classId: id } });
+        await Promise.all(
+          schedule.map((daySchedule) =>
+            prisma.classSchedule.create({
+              data: {
+                classId: id,
+                day: daySchedule.day,
+                periods: daySchedule.periods as any,
+              },
+            }),
+          ),
+        );
+      }
+
+      return updated;
+    });
+
+    return this.getClassById(updatedClass.id);
   }
 
   async getClassById(classId: string): Promise<ClassResponseDto> {

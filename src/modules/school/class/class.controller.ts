@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   HttpStatus,
   HttpCode,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
 import { ClassService } from './class.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { ClassResponseDto } from './dto/class-response.dto';
+import { UpdateClassDto } from './dto/update-class.dto';
 import { JwtAuthGuard } from '../../../common/services/token.service';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
@@ -55,6 +57,43 @@ export class ClassController {
     @Body() createClassDto: CreateClassDto,
   ): Promise<ClassResponseDto> {
     return this.classService.createClass(createClassDto);
+  }
+
+  @Get()
+  @Roles(UserRole.SCHOOL_ADMIN, UserRole.SCHOOL_STAFF)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get all classes' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Classes found',
+    type: [ClassResponseDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Classes not found',
+  })
+  async getAllClasses(): Promise<ClassResponseDto[]> {
+    return this.classService.getAllClasses();
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.SCHOOL_ADMIN, UserRole.SCHOOL_STAFF)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update a class' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Class updated successfully',
+    type: ClassResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Class not found',
+  })
+  async updateClass(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateClassDto: UpdateClassDto,
+  ): Promise<ClassResponseDto> {
+    return this.classService.updateClass(id, updateClassDto);
   }
 
   @Get(':id')

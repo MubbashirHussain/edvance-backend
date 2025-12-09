@@ -1,8 +1,8 @@
-import { 
-  Injectable, 
-  NotFoundException, 
+import {
+  Injectable,
+  NotFoundException,
   ConflictException,
-  BadRequestException
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
@@ -13,7 +13,9 @@ import { SubjectResponseDto } from './dto/subject-response.dto';
 export class SubjectService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createSubjectDto: CreateSubjectDto): Promise<SubjectResponseDto> {
+  async create(
+    createSubjectDto: CreateSubjectDto,
+  ): Promise<SubjectResponseDto> {
     // Check if subject with same code already exists in the school
     const existingSubject = await this.prisma.subject.findFirst({
       where: {
@@ -54,7 +56,7 @@ export class SubjectService {
       where: { schoolId },
       orderBy: { name: 'asc' },
     });
-    return subjects.map(subject => this.mapToDto(subject));
+    return subjects.map((subject) => this.mapToDto(subject));
   }
 
   async findOne(id: string): Promise<SubjectResponseDto> {
@@ -74,14 +76,14 @@ export class SubjectService {
     updateSubjectDto: UpdateSubjectDto,
   ): Promise<SubjectResponseDto> {
     // Check if subject exists
-    await this.findOne(id);
+    const currentSubject = await this.findOne(id);
 
     // If code is being updated, check for duplicates
     if (updateSubjectDto.code) {
       const existingSubject = await this.prisma.subject.findFirst({
         where: {
           code: updateSubjectDto.code,
-          schoolId: updateSubjectDto.schoolId,
+          schoolId: currentSubject.schoolId,
           NOT: { id },
         },
       });

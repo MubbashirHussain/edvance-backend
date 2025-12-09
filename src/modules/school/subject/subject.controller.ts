@@ -4,7 +4,7 @@ import {
   Post,
   Body,
   Param,
-  Put,
+  Patch,
   Delete,
   Query,
   UseGuards,
@@ -88,7 +88,7 @@ export class SubjectController {
     return this.subjectService.findOne(id);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @Roles(UserRole.SCHOOL_ADMIN, UserRole.SCHOOL_STAFF)
   @ApiOperation({ summary: 'Update a subject' })
   @ApiResponse({
